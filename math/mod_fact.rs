@@ -1,3 +1,21 @@
+#[allow(dead_code)]
+fn pow_mod(base: i64, power: i64, modulo: i64) -> i64 {
+    let mut base = base;
+    let mut power = power;
+    let mut ans = 1;
+    while power > 0 {
+        if power & 1 == 1 { ans = ans * base % modulo; }
+        power >>= 1;
+        base = base * base % modulo;
+    }
+    ans
+}
+
+#[allow(dead_code)]
+fn inv_mod(a: i64, modulo: i64) -> i64 {
+    pow_mod(a, modulo - 2, modulo)
+}
+
 const MOD: i64 = 1e+9 as i64 + 7;
 const FACT_MAX: usize = 100000;
 static mut FACTORIAL: [i64; FACT_MAX + 1] = [0; FACT_MAX + 1];
