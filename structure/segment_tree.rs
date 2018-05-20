@@ -1,4 +1,10 @@
 #[allow(dead_code)]
+#[derive(Clone)]
+struct Node {
+    v: i32,
+}
+
+#[allow(dead_code)]
 impl Node {
     fn new(v: i32) -> Node {
         Node { v: v }
@@ -31,14 +37,15 @@ impl SegmentTree {
             data: vec![Node::default_value(); 1 << (max_depth + 1)],
         }
     }
-    fn set(&mut self, index: usize, value: &Node) {
+    fn set(&mut self, index: usize, value: Node) {
         let mut target = (1 << self.max_depth) + index;
-        self.data[target] = value.clone();
+        self.data[target] = value;
         for _ in 0..self.max_depth {
             target >>= 1;
             self.data[target] = merge(&self.data[target * 2], &self.data[target * 2 + 1]);
         }
     }
+    // [left, right)
     fn get(&self, left: usize, right: usize) -> Node {
         assert!(left < right);
         self.in_get(0, 1, left, right)
