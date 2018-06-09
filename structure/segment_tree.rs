@@ -22,6 +22,7 @@ fn merge(left: &Node, right: &Node) -> Node {
 
 #[allow(dead_code)]
 struct SegmentTree {
+    n: n,
     max_depth: usize,
     data: Vec<Node>,
 }
@@ -33,11 +34,13 @@ impl SegmentTree {
             max_depth += 1;
         }
         SegmentTree {
+            n: n,
             max_depth: max_depth,
             data: vec![Node::default_value(); 1 << (max_depth + 1)],
         }
     }
     fn set(&mut self, index: usize, value: Node) {
+        assert!(index < self.n);
         let mut target = (1 << self.max_depth) + index;
         self.data[target] = value;
         for _ in 0..self.max_depth {
@@ -48,6 +51,7 @@ impl SegmentTree {
     // [left, right)
     fn get(&self, left: usize, right: usize) -> Node {
         assert!(left < right);
+        assert!(right <= self.n);
         self.in_get(0, 1, left, right)
     }
     fn in_get(&self, depth: usize, node: usize, left: usize, right: usize) -> Node {
