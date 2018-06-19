@@ -19,30 +19,30 @@ fn merge(left: &Node, right: &Node) -> Node {
 }
 // add op
 #[allow(dead_code)]
-fn resolve_delay(lhs: &Node, rhs: &Node) -> Node {
+fn resolve_lazy(lhs: &Node, rhs: &Node) -> Node {
     Node::new(lhs.v + rhs.v)
 }
 
 #[allow(dead_code)]
-struct DelaySegmentTree {
+struct LazySegmentTree {
     n: usize,
     max_depth: usize,
     data: Vec<Node>,
-    delay_data: Vec<Node>,
+    lazy_data: Vec<Node>,
     updated: Vec<bool>,
 }
 #[allow(dead_code)]
-impl DelaySegmentTree {
-    fn new(n: usize) -> DelaySegmentTree {
+impl LazySegmentTree {
+    fn new(n: usize) -> LazySegmentTree {
         let mut max_depth = 0;
         while (1 << max_depth) < n {
             max_depth += 1;
         }
-        DelaySegmentTree {
+        LazySegmentTree {
             n: n,
             max_depth: max_depth,
             data: vec![Node::default_value(); 1 << (max_depth + 1)],
-            delay_data: vec![Node::default_value(); 1 << (max_depth + 1)],
+            lazy_data: vec![Node::default_value(); 1 << (max_depth + 1)],
             updated: vec![false; 1 << (max_depth + 1)],
         }
     }
@@ -67,7 +67,7 @@ impl DelaySegmentTree {
         self.divide(node);
         if right - left == width && left == node_left {
             self.updated[node] = true;
-            self.delay_data[node] = value;
+            self.lazy_data[node] = value;
             self.divide(node);
         } else {
             if right <= node_mid {
@@ -108,22 +108,22 @@ impl DelaySegmentTree {
         if node < (1 << self.max_depth) {
             for i in 0..2 {
                 if self.updated[node * 2 + i] {
-                    self.delay_data[node * 2 + i] =
-                        resolve_delay(&self.delay_data[node * 2 + i], &self.delay_data[node]);
+                    self.lazy_data[node * 2 + i] =
+                        resolve_lazy(&self.lazy_data[node * 2 + i], &self.lazy_data[node]);
                 } else {
-                    self.delay_data[node * 2 + i] = self.delay_data[node].clone();
+                    self.lazy_data[node * 2 + i] = self.lazy_data[node].clone();
                     self.updated[node * 2 + i] = true;
                 }
             }
         }
         self.updated[node] = false;
-        self.data[node] = resolve_delay(&self.data[node], &self.delay_data[node]);
+        self.data[node] = resolve_lazy(&self.data[node], &self.lazy_data[node]);
     }
 }
 
 #[test]
-fn test_delay_segment_tree() {
-    let mut stree = DelaySegmentTree::new(10);
+fn test_lazy_segment_tree() {
+    let mut stree = LazySegmentTree::new(10);
     stree.range_op(1, 4, Node::new(3));
     assert!(stree.get(0, 1).v == 0);
     assert!(stree.get(1, 2).v == 3);
