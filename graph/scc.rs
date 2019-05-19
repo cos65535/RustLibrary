@@ -1,6 +1,6 @@
 fn scc(g: &Graph) -> Vec<Vec<usize>> {
     let n = g.len();
-    let mut ret = vec![vec![]];
+    let mut ret = vec![];
     let mut revg: Graph = vec![vec![]; n];
     for edges in g {
         for edge in edges {
