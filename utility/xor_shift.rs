@@ -40,6 +40,12 @@ impl XorShift {
     fn next_i64_lr(&mut self, l: i64, r: i64) -> i64 {
         self.next_i64(r - l + 1) + l
     }
+    fn next_usize(&mut self, r: usize) -> usize {
+        ((((self.xor128() as u64) << 32) + self.xor128() as u64) % r as u64) as usize
+    }
+    fn next_usize_lr(&mut self, l: usize, r: usize) -> usize {
+        self.next_usize(r - l + 1) + l
+    }
     fn next_f64(&mut self, r: f64) -> f64 {
         (self.xor128() as f64) / (0xffffffffu32 as f64) * r
     }
