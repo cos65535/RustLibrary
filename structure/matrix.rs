@@ -1,7 +1,7 @@
 const DIM: usize = 3;
 type Weight = i64;
 #[allow(dead_code)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Vector {
     pub vect: [Weight; DIM],
 }
@@ -27,7 +27,9 @@ impl Vector {
         Vector { vect: v }
     }
     pub fn zero() -> Vector {
-        Vector { vect: [0; DIM] }
+        Vector {
+            vect: [0 as Weight; DIM],
+        }
     }
     pub fn len(&self) -> usize {
         DIM
@@ -43,7 +45,7 @@ impl Vector {
     }
     pub fn dot(&self, rhs: Vector) -> Weight {
         assert!(self.len() == rhs.len());
-        let mut ret = 0;
+        let mut ret = 0 as Weight;
         for i in 0..self.len() {
             ret += self.vect[i] * rhs.vect[i];
         }
@@ -52,7 +54,7 @@ impl Vector {
     pub fn cross(&self, rhs: Vector) -> Vector {
         assert!(self.len() == 3);
         assert!(rhs.len() == 3);
-        let mut ret = Vector::new(0, 0, 0);
+        let mut ret = Vector::zero();
         ret.vect[0] = self.y() * rhs.z() - self.z() * rhs.y();
         ret.vect[1] = self.z() * rhs.x() - self.x() * rhs.z();
         ret.vect[2] = self.x() * rhs.y() - self.y() * rhs.x();
@@ -80,6 +82,7 @@ impl Vector {
 #[test]
 fn vector_inner_test() {
     let mut v = Vector::new(1, 2, 3);
+    assert!(v == Vector::new(1, 2, 3));
     assert!(v.x() == 1);
     assert!(v.y() == 2);
     assert!(v.z() == 3);
@@ -218,7 +221,7 @@ impl std::ops::Neg for Vector {
     type Output = Vector;
     #[inline]
     fn neg(self) -> Vector {
-        return self * -1;
+        return self * (-1 as Weight);
     }
 }
 #[test]
@@ -292,7 +295,7 @@ fn vect_ops_test() {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Matrix {
     pub vects: [Vector; DIM],
 }
@@ -318,7 +321,7 @@ impl Matrix {
     pub fn identity() -> Matrix {
         let mut ret = Matrix::zero();
         for i in 0..DIM {
-            ret[i][i] = 1;
+            ret[i][i] = 1 as Weight;
         }
         return ret;
     }
@@ -341,7 +344,7 @@ impl Matrix {
         return ret;
     }
     pub fn trace(&self) -> Weight {
-        let mut ret = 0;
+        let mut ret = 0 as Weight;
         for i in 0..DIM {
             ret += self[i][i];
         }
@@ -535,7 +538,7 @@ impl std::ops::Neg for Matrix {
     type Output = Matrix;
     #[inline]
     fn neg(self) -> Matrix {
-        return self * -1;
+        return self * (-1 as Weight);
     }
 }
 #[allow(dead_code)]
