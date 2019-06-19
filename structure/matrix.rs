@@ -4,19 +4,6 @@ type Weight = i64;
 pub struct Vector {
     pub vect: Vec<Weight>,
 }
-impl std::ops::Index<usize> for Vector {
-    type Output = Weight;
-    #[inline]
-    fn index(&self, rhs: usize) -> &Weight {
-        &self.vect[rhs]
-    }
-}
-impl std::ops::IndexMut<usize> for Vector {
-    #[inline]
-    fn index_mut(&mut self, rhs: usize) -> &mut Weight {
-        &mut self.vect[rhs]
-    }
-}
 #[allow(dead_code)]
 impl Vector {
     pub fn new(v: Vec<Weight>) -> Vector {
@@ -73,6 +60,7 @@ impl Vector {
     pub fn abs(&self) -> f64 {
         (self.norm() as f64).sqrt()
     }
+    // Wegith‚ªf64‚Å‚È‚¢‚Æ“®‚©‚È‚¢
     // pub fn normalize(&self) -> &Vector {
     //     self /= self.abs();
     //     return self;
@@ -87,125 +75,17 @@ impl Vector {
 //     return lhs.cross(rhs);
 // }
 
-impl<'a> std::ops::Add<&'a Vector> for Vector {
-    type Output = Vector;
+impl std::ops::Index<usize> for Vector {
+    type Output = Weight;
     #[inline]
-    fn add(self, rhs: &'a Vector) -> Vector {
-        assert!(self.len() == rhs.len());
-        let mut ret = self;
-        for i in 0..ret.len() {
-            ret[i] += rhs[i];
-        }
-        return ret;
+    fn index(&self, rhs: usize) -> &Weight {
+        &self.vect[rhs]
     }
 }
-impl<'a> std::ops::Sub<&'a Vector> for Vector {
-    type Output = Vector;
+impl std::ops::IndexMut<usize> for Vector {
     #[inline]
-    fn sub(self, rhs: &'a Vector) -> Vector {
-        assert!(self.len() == rhs.len());
-        let mut ret = self;
-        for i in 0..ret.len() {
-            ret[i] -= rhs[i];
-        }
-        return ret;
-    }
-}
-impl std::ops::Add<Weight> for Vector {
-    type Output = Vector;
-    #[inline]
-    fn add(self, rhs: Weight) -> Vector {
-        let mut ret = self;
-        for i in 0..ret.len() {
-            ret[i] += rhs;
-        }
-        return ret;
-    }
-}
-impl std::ops::Sub<Weight> for Vector {
-    type Output = Vector;
-    #[inline]
-    fn sub(self, rhs: Weight) -> Vector {
-        let mut ret = self;
-        for i in 0..ret.len() {
-            ret[i] -= rhs;
-        }
-        return ret;
-    }
-}
-impl std::ops::Mul<Weight> for Vector {
-    type Output = Vector;
-    #[inline]
-    fn mul(self, rhs: Weight) -> Vector {
-        let mut ret = self;
-        for i in 0..ret.len() {
-            ret[i] *= rhs;
-        }
-        return ret;
-    }
-}
-impl std::ops::Div<Weight> for Vector {
-    type Output = Vector;
-    #[inline]
-    fn div(self, rhs: Weight) -> Vector {
-        let mut ret = self;
-        for i in 0..ret.len() {
-            ret[i] /= rhs;
-        }
-        return ret;
-    }
-}
-impl std::ops::Rem<Weight> for Vector {
-    type Output = Vector;
-    #[inline]
-    fn rem(self, rhs: Weight) -> Vector {
-        let mut ret = self;
-        for i in 0..ret.len() {
-            ret[i] %= rhs;
-        }
-        return ret;
-    }
-}
-impl<'a> std::ops::AddAssign<&'a Vector> for Vector {
-    #[inline]
-    fn add_assign(&mut self, rhs: &'a Vector) {
-        *self = self.clone() + rhs;
-    }
-}
-impl<'a> std::ops::SubAssign<&'a Vector> for Vector {
-    #[inline]
-    fn sub_assign(&mut self, rhs: &'a Vector) {
-        *self = self.clone() - rhs;
-    }
-}
-impl std::ops::AddAssign<Weight> for Vector {
-    #[inline]
-    fn add_assign(&mut self, rhs: Weight) {
-        *self = self.clone() + rhs;
-    }
-}
-impl std::ops::SubAssign<Weight> for Vector {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Weight) {
-        *self = self.clone() - rhs;
-    }
-}
-impl std::ops::MulAssign<Weight> for Vector {
-    #[inline]
-    fn mul_assign(&mut self, rhs: Weight) {
-        *self = self.clone() * rhs;
-    }
-}
-impl std::ops::DivAssign<Weight> for Vector {
-    #[inline]
-    fn div_assign(&mut self, rhs: Weight) {
-        *self = self.clone() / rhs;
-    }
-}
-impl std::ops::RemAssign<Weight> for Vector {
-    #[inline]
-    fn rem_assign(&mut self, rhs: Weight) {
-        *self = self.clone() % rhs;
+    fn index_mut(&mut self, rhs: usize) -> &mut Weight {
+        &mut self.vect[rhs]
     }
 }
 impl std::ops::Neg for Vector {
@@ -216,23 +96,76 @@ impl std::ops::Neg for Vector {
     }
 }
 
+macro_rules! vector_vector_ops {
+    ( $trate:ident, $fname:ident, $op:tt) => {
+impl<'a> std::ops::$trate<&'a Vector> for Vector {
+    type Output = Vector;
+    #[inline]
+    fn $fname(self, rhs: &'a Vector) -> Vector {
+        assert!(self.len() == rhs.len());
+        let mut ret = self;
+        for i in 0..ret.len() {
+            ret[i] = ret[i] $op rhs[i];
+        }
+        return ret;
+    }
+        }
+    };
+}
+macro_rules! vector_scalar_ops {
+    ( $trate:ident, $fname:ident, $op:tt) => {
+impl std::ops::$trate<Weight> for Vector {
+    type Output = Vector;
+    #[inline]
+    fn $fname(self, rhs: Weight) -> Vector {
+        let mut ret = self;
+        for i in 0..ret.len() {
+            ret[i] = ret[i] $op rhs;
+        }
+        return ret;
+    }
+}
+    };
+}
+macro_rules! self_self_assign_ops {
+    ( $type:ty, $trate:ident, $fname:ident, $op:tt) => {
+        impl<'a> std::ops::$trate<&'a $type> for $type {
+            #[inline]
+            fn $fname(&mut self, rhs: &'a $type) {
+                *self = self.clone() $op rhs;
+            }
+        }
+    };
+}
+macro_rules! self_scalar_assign_ops {
+    ( $type:ty, $trate:ident, $fname:ident, $op:tt) => {
+        impl std::ops::$trate<Weight> for $type {
+            #[inline]
+            fn $fname(&mut self, rhs: Weight) {
+                *self = self.clone() $op rhs;
+            }
+        }
+    };
+}
+vector_vector_ops!(Add, add, +);
+vector_vector_ops!(Sub, sub, -);
+vector_scalar_ops!(Add, add, +);
+vector_scalar_ops!(Sub, sub, -);
+vector_scalar_ops!(Mul, mul, *);
+vector_scalar_ops!(Div, div, /);
+vector_scalar_ops!(Rem, rem, %);
+self_self_assign_ops!(Vector, AddAssign, add_assign, +);
+self_self_assign_ops!(Vector, SubAssign, sub_assign, -);
+self_scalar_assign_ops!(Vector, AddAssign, add_assign, +);
+self_scalar_assign_ops!(Vector, SubAssign, sub_assign, -);
+self_scalar_assign_ops!(Vector, MulAssign, mul_assign, *);
+self_scalar_assign_ops!(Vector, DivAssign, div_assign, /);
+self_scalar_assign_ops!(Vector, RemAssign, rem_assign, %);
+
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Matrix {
     pub vects: Vec<Vector>,
-}
-impl std::ops::Index<usize> for Matrix {
-    type Output = Vector;
-    #[inline]
-    fn index(&self, rhs: usize) -> &Vector {
-        &self.vects[rhs]
-    }
-}
-impl std::ops::IndexMut<usize> for Matrix {
-    #[inline]
-    fn index_mut(&mut self, rhs: usize) -> &mut Vector {
-        &mut self.vects[rhs]
-    }
 }
 impl Matrix {
     pub fn new(mat: Vec<Vec<Weight>>) -> Matrix {
@@ -332,6 +265,7 @@ impl Matrix {
         ret[2] = self[0].cross(&self[1]);
         return ret;
     }
+    // Wegith‚ªf64‚Å‚È‚¢‚Æ“®‚©‚È‚¢
     // pub fn inverse(&self) -> Matrix {
     //     assert!(self.height() == 3);
     //     assert!(self.width() == 3);
@@ -348,30 +282,17 @@ impl Matrix {
         return self[0].dot(&self[1].cross(&self[2]));
     }
 }
-impl<'a> std::ops::Add<&'a Matrix> for Matrix {
-    type Output = Matrix;
+impl std::ops::Index<usize> for Matrix {
+    type Output = Vector;
     #[inline]
-    fn add(self, rhs: &'a Matrix) -> Matrix {
-        assert!(self.height() == rhs.height());
-        assert!(self.width() == rhs.width());
-        let mut ret = self;
-        for i in 0..ret.height() {
-            ret[i] += &rhs[i];
-        }
-        return ret;
+    fn index(&self, rhs: usize) -> &Vector {
+        &self.vects[rhs]
     }
 }
-impl<'a> std::ops::Sub<&'a Matrix> for Matrix {
-    type Output = Matrix;
+impl std::ops::IndexMut<usize> for Matrix {
     #[inline]
-    fn sub(self, rhs: &'a Matrix) -> Matrix {
-        assert!(self.height() == rhs.height());
-        assert!(self.width() == rhs.width());
-        let mut ret = self;
-        for i in 0..ret.height() {
-            ret[i] -= &rhs[i];
-        }
-        return ret;
+    fn index_mut(&mut self, rhs: usize) -> &mut Vector {
+        &mut self.vects[rhs]
     }
 }
 impl<'a> std::ops::Mul<&'a Matrix> for Matrix {
@@ -404,109 +325,6 @@ impl<'a> std::ops::Mul<&'a Vector> for Matrix {
         return ret;
     }
 }
-impl std::ops::Add<Weight> for Matrix {
-    type Output = Matrix;
-    #[inline]
-    fn add(self, rhs: Weight) -> Matrix {
-        let mut ret = self;
-        for i in 0..ret.height() {
-            ret[i] += rhs;
-        }
-        return ret;
-    }
-}
-impl std::ops::Sub<Weight> for Matrix {
-    type Output = Matrix;
-    #[inline]
-    fn sub(self, rhs: Weight) -> Matrix {
-        let mut ret = self;
-        for i in 0..ret.height() {
-            ret[i] -= rhs;
-        }
-        return ret;
-    }
-}
-impl std::ops::Mul<Weight> for Matrix {
-    type Output = Matrix;
-    #[inline]
-    fn mul(self, rhs: Weight) -> Matrix {
-        let mut ret = self;
-        for i in 0..ret.height() {
-            ret[i] *= rhs;
-        }
-        return ret;
-    }
-}
-impl std::ops::Div<Weight> for Matrix {
-    type Output = Matrix;
-    #[inline]
-    fn div(self, rhs: Weight) -> Matrix {
-        let mut ret = self;
-        for i in 0..ret.height() {
-            ret[i] /= rhs;
-        }
-        return ret;
-    }
-}
-impl std::ops::Rem<Weight> for Matrix {
-    type Output = Matrix;
-    #[inline]
-    fn rem(self, rhs: Weight) -> Matrix {
-        let mut ret = self;
-        for i in 0..ret.height() {
-            ret[i] %= rhs;
-        }
-        return ret;
-    }
-}
-impl<'a> std::ops::AddAssign<&'a Matrix> for Matrix {
-    #[inline]
-    fn add_assign(&mut self, rhs: &'a Matrix) {
-        *self = self.clone() + rhs;
-    }
-}
-impl<'a> std::ops::SubAssign<&'a Matrix> for Matrix {
-    #[inline]
-    fn sub_assign(&mut self, rhs: &'a Matrix) {
-        *self = self.clone() - rhs;
-    }
-}
-impl<'a> std::ops::MulAssign<&'a Matrix> for Matrix {
-    #[inline]
-    fn mul_assign(&mut self, rhs: &'a Matrix) {
-        *self = self.clone() * rhs;
-    }
-}
-impl std::ops::AddAssign<Weight> for Matrix {
-    #[inline]
-    fn add_assign(&mut self, rhs: Weight) {
-        *self = self.clone() + rhs;
-    }
-}
-impl std::ops::SubAssign<Weight> for Matrix {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Weight) {
-        *self = self.clone() - rhs;
-    }
-}
-impl std::ops::MulAssign<Weight> for Matrix {
-    #[inline]
-    fn mul_assign(&mut self, rhs: Weight) {
-        *self = self.clone() * rhs;
-    }
-}
-impl std::ops::DivAssign<Weight> for Matrix {
-    #[inline]
-    fn div_assign(&mut self, rhs: Weight) {
-        *self = self.clone() / rhs;
-    }
-}
-impl std::ops::RemAssign<Weight> for Matrix {
-    #[inline]
-    fn rem_assign(&mut self, rhs: Weight) {
-        *self = self.clone() % rhs;
-    }
-}
 impl std::ops::Neg for Matrix {
     type Output = Matrix;
     #[inline]
@@ -514,6 +332,59 @@ impl std::ops::Neg for Matrix {
         return self * (-1 as Weight);
     }
 }
+
+macro_rules! matrix_matrix_ops {
+    ( $trate:ident, $fname:ident, $op:tt) => {
+impl<'a> std::ops::$trate<&'a Matrix> for Matrix {
+    type Output = Matrix;
+    #[inline]
+    fn $fname(self, rhs: &'a Matrix) -> Matrix {
+        assert!(self.height() == rhs.height());
+        assert!(self.width() == rhs.width());
+        let mut ret = self;
+        for i in 0..ret.height() {
+            for j in 0..ret.width() {
+                ret[i][j] = ret[i][j] $op rhs[i][j];
+            }
+        }
+        return ret;
+    }
+}
+    };
+}
+macro_rules! matrix_scalar_ops {
+    ( $trate:ident, $fname:ident, $op:tt) => {
+impl std::ops::$trate<Weight> for Matrix {
+    type Output = Matrix;
+    #[inline]
+    fn $fname(self, rhs: Weight) -> Matrix {
+        let mut ret = self;
+        for i in 0..ret.height() {
+            for j in 0..ret.width() {
+                ret[i][j] = ret[i][j] $op rhs;
+            }
+        }
+        return ret;
+    }
+}
+    };
+}
+matrix_matrix_ops!(Add, add, +);
+matrix_matrix_ops!(Sub, sub, -);
+matrix_scalar_ops!(Add, add, +);
+matrix_scalar_ops!(Sub, sub, -);
+matrix_scalar_ops!(Mul, mul, *);
+matrix_scalar_ops!(Div, div, /);
+matrix_scalar_ops!(Rem, rem, %);
+self_self_assign_ops!(Matrix, AddAssign, add_assign, +);
+self_self_assign_ops!(Matrix, SubAssign, sub_assign, -);
+self_self_assign_ops!(Matrix, MulAssign, mul_assign, *);
+self_scalar_assign_ops!(Matrix, AddAssign, add_assign, +);
+self_scalar_assign_ops!(Matrix, SubAssign, sub_assign, -);
+self_scalar_assign_ops!(Matrix, MulAssign, mul_assign, *);
+self_scalar_assign_ops!(Matrix, DivAssign, div_assign, /);
+self_scalar_assign_ops!(Matrix, RemAssign, rem_assign, %);
+
 #[allow(dead_code)]
 fn matrix_modmul(lhs: &Matrix, rhs: &Matrix, modulo: i64) -> Matrix {
     assert!(lhs.width() == rhs.height());
