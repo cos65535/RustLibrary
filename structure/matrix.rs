@@ -19,13 +19,13 @@ impl std::ops::IndexMut<usize> for Vector {
 }
 #[allow(dead_code)]
 impl Vector {
+    pub fn new(v: Vec<Weight>) -> Vector {
+        Vector { vect: v }
+    }
     pub fn new_3d(x: Weight, y: Weight, z: Weight) -> Vector {
         Vector {
             vect: vec![x, y, z],
         }
-    }
-    pub fn new_nd(v: Vec<Weight>) -> Vector {
-        Vector { vect: v }
     }
     pub fn zero(dim: usize) -> Vector {
         Vector {
@@ -39,10 +39,16 @@ impl Vector {
         self.vect[0]
     }
     pub fn y(&self) -> Weight {
+        assert!(self.len() > 1);
         self.vect[1]
     }
     pub fn z(&self) -> Weight {
+        assert!(self.len() > 2);
         self.vect[2]
+    }
+    pub fn w(&self) -> Weight {
+        assert!(self.len() > 3);
+        self.vect[3]
     }
     pub fn dot(&self, rhs: &Vector) -> Weight {
         assert!(self.len() == rhs.len());
@@ -80,24 +86,6 @@ impl Vector {
 // pub fn cross(lhs: &Vector, rhs: &Vector) -> Vector {
 //     return lhs.cross(rhs);
 // }
-#[test]
-fn vector_inner_test() {
-    let mut v = Vector::new_3d(1, 2, 3);
-    assert!(v == Vector::new_3d(1, 2, 3));
-    assert!(v.x() == 1);
-    assert!(v.y() == 2);
-    assert!(v.z() == 3);
-    assert!(v.dot(&v) == 14);
-    assert!(v.norm() == 14);
-    assert!(v.abs() == (14.0f64).sqrt());
-    v.vect[0] = 10;
-    v.vect[1] = 20;
-    v.vect[2] = 30;
-    assert!(v.x() == 10);
-    assert!(v.y() == 20);
-    assert!(v.z() == 30);
-    assert!(Vector::new_3d(1, 0, 0).cross(&Vector::new_3d(0, 1, 0)) == Vector::new_3d(0, 0, 1));
-}
 
 impl<'a> std::ops::Add<&'a Vector> for Vector {
     type Output = Vector;
@@ -227,75 +215,6 @@ impl std::ops::Neg for Vector {
         return self * (-1 as Weight);
     }
 }
-#[test]
-fn vect_ops_test() {
-    let mut v1 = Vector::new_3d(1, 2, 3);
-    let v2 = Vector::new_3d(1, 2, 3);
-    let v3 = v1.clone() + &v2;
-    assert!(v3.x() == 2);
-    assert!(v3.y() == 4);
-    assert!(v3.z() == 6);
-    let v3 = v1.clone() + 3;
-    assert!(v3.x() == 4);
-    assert!(v3.y() == 5);
-    assert!(v3.z() == 6);
-    v1 += &v2;
-    assert!(v1.x() == 2);
-    assert!(v1.y() == 4);
-    assert!(v1.z() == 6);
-
-    let mut v1 = Vector::new_3d(1, 2, 3);
-    let v3 = v1.clone() - &v2;
-    assert!(v3.x() == 0);
-    assert!(v3.y() == 0);
-    assert!(v3.z() == 0);
-    let v3 = v1.clone() - 1;
-    assert!(v3.x() == 0);
-    assert!(v3.y() == 1);
-    assert!(v3.z() == 2);
-    v1 -= &v2;
-    assert!(v1.x() == 0);
-    assert!(v1.y() == 0);
-    assert!(v1.z() == 0);
-
-    let mut v1 = Vector::new_3d(1, 2, 3);
-    let v3 = v1.clone() * 3;
-    assert!(v3.x() == 3);
-    assert!(v3.y() == 6);
-    assert!(v3.z() == 9);
-    v1 *= 3;
-    assert!(v1.x() == 3);
-    assert!(v1.y() == 6);
-    assert!(v1.z() == 9);
-
-    let mut v1 = Vector::new_3d(3, 6, 9);
-    let v3 = v1.clone() / 3;
-    assert!(v3.x() == 1);
-    assert!(v3.y() == 2);
-    assert!(v3.z() == 3);
-    v1 /= 3;
-    assert!(v1.x() == 1);
-    assert!(v1.y() == 2);
-    assert!(v1.z() == 3);
-
-    let mut v1 = Vector::new_3d(1, 2, 3);
-    let v3 = v1.clone() % 3;
-    assert!(v3.x() == 1);
-    assert!(v3.y() == 2);
-    assert!(v3.z() == 0);
-    v1 %= 3;
-    assert!(v1.x() == 1);
-    assert!(v1.y() == 2);
-    assert!(v1.z() == 0);
-
-    let mut v1 = Vector::new_3d(1, 2, 3);
-    v1[0] = 10;
-    v1[1] = 20;
-    v1[2] = 30;
-    assert!(v1[0] == 10);
-    assert!(v1[1] == 20);
-    assert!(v1[2] == 30);
-}
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -316,6 +235,27 @@ impl std::ops::IndexMut<usize> for Matrix {
     }
 }
 impl Matrix {
+    pub fn new(mat: Vec<Vec<Weight>>) -> Matrix {
+        let vects: Vec<Vector> = mat.into_iter().map(|vect| Vector::new(vect)).collect();
+        for i in 0..vects.len() {
+            assert!(vects[0].len() == vects[i].len());
+        }
+        Matrix { vects: vects }
+    }
+    // (A B)
+    // (C D)
+    pub fn new_from_4mat(a: &Matrix, b: &Matrix, c: &Matrix, d: &Matrix) -> Matrix {
+        assert!(a.width() == c.width());
+        assert!(b.width() == d.width());
+        assert!(a.height() == b.height());
+        assert!(c.height() == d.height());
+        let mut ret = Matrix::zero(a.height() + c.height(), a.width() + b.width());
+        ret.set_matrix(0, 0, a);
+        ret.set_matrix(0, a.width(), b);
+        ret.set_matrix(a.height(), 0, c);
+        ret.set_matrix(a.height(), a.width(), d);
+        return ret;
+    }
     pub fn zero(h: usize, w: usize) -> Matrix {
         Matrix {
             vects: vec![Vector::zero(w); h],
@@ -333,6 +273,26 @@ impl Matrix {
     }
     pub fn width(&self) -> usize {
         self[0].len()
+    }
+    pub fn set_matrix(&mut self, sy: usize, sx: usize, matrix: &Matrix) {
+        assert!(sy + matrix.height() <= self.height());
+        assert!(sx + matrix.width() <= self.width());
+        for y in 0..matrix.height() {
+            for x in 0..matrix.width() {
+                self[sy + y][sx + x] = matrix[y][x];
+            }
+        }
+    }
+    pub fn get_matrix(&self, sy: usize, sx: usize, h: usize, w: usize) -> Matrix {
+        assert!(sy + h <= self.height());
+        assert!(sx + w <= self.width());
+        let mut ret = Matrix::zero(h, w);
+        for y in 0..h {
+            for x in 0..w {
+                ret[y][x] = self[sy + y][sx + x];
+            }
+        }
+        return ret;
     }
     pub fn row(&self, y: usize) -> Vector {
         assert!(y < self.height());
@@ -581,6 +541,150 @@ fn matrix_powmod(base: Matrix, power: i64, modulo: i64) -> Matrix {
         base = matrix_modmul(&base, &base, modulo);
     }
     return ans;
+}
+
+#[test]
+fn vector_test() {
+    let mut v = Vector::new_3d(1, 2, 3);
+    assert!(v == Vector::new_3d(1, 2, 3));
+    assert!(v.x() == 1);
+    assert!(v.y() == 2);
+    assert!(v.z() == 3);
+    assert!(v.dot(&v) == 14);
+    assert!(v.norm() == 14);
+    assert!(v.abs() == (14.0f64).sqrt());
+    v.vect[0] = 10;
+    v.vect[1] = 20;
+    v.vect[2] = 30;
+    assert!(v.x() == 10);
+    assert!(v.y() == 20);
+    assert!(v.z() == 30);
+    assert!(Vector::new_3d(1, 0, 0).cross(&Vector::new_3d(0, 1, 0)) == Vector::new_3d(0, 0, 1));
+}
+#[test]
+fn vector_ops_test() {
+    let mut v1 = Vector::new_3d(1, 2, 3);
+    let v2 = Vector::new_3d(1, 2, 3);
+    let v3 = v1.clone() + &v2;
+    assert!(v3.x() == 2);
+    assert!(v3.y() == 4);
+    assert!(v3.z() == 6);
+    let v3 = v1.clone() + 3;
+    assert!(v3.x() == 4);
+    assert!(v3.y() == 5);
+    assert!(v3.z() == 6);
+    v1 += &v2;
+    assert!(v1.x() == 2);
+    assert!(v1.y() == 4);
+    assert!(v1.z() == 6);
+
+    let mut v1 = Vector::new_3d(1, 2, 3);
+    let v3 = v1.clone() - &v2;
+    assert!(v3.x() == 0);
+    assert!(v3.y() == 0);
+    assert!(v3.z() == 0);
+    let v3 = v1.clone() - 1;
+    assert!(v3.x() == 0);
+    assert!(v3.y() == 1);
+    assert!(v3.z() == 2);
+    v1 -= &v2;
+    assert!(v1.x() == 0);
+    assert!(v1.y() == 0);
+    assert!(v1.z() == 0);
+
+    let mut v1 = Vector::new_3d(1, 2, 3);
+    let v3 = v1.clone() * 3;
+    assert!(v3.x() == 3);
+    assert!(v3.y() == 6);
+    assert!(v3.z() == 9);
+    v1 *= 3;
+    assert!(v1.x() == 3);
+    assert!(v1.y() == 6);
+    assert!(v1.z() == 9);
+
+    let mut v1 = Vector::new_3d(3, 6, 9);
+    let v3 = v1.clone() / 3;
+    assert!(v3.x() == 1);
+    assert!(v3.y() == 2);
+    assert!(v3.z() == 3);
+    v1 /= 3;
+    assert!(v1.x() == 1);
+    assert!(v1.y() == 2);
+    assert!(v1.z() == 3);
+
+    let mut v1 = Vector::new_3d(1, 2, 3);
+    let v3 = v1.clone() % 3;
+    assert!(v3.x() == 1);
+    assert!(v3.y() == 2);
+    assert!(v3.z() == 0);
+    v1 %= 3;
+    assert!(v1.x() == 1);
+    assert!(v1.y() == 2);
+    assert!(v1.z() == 0);
+
+    let mut v1 = Vector::new_3d(1, 2, 3);
+    v1[0] = 10;
+    v1[1] = 20;
+    v1[2] = 30;
+    assert!(v1[0] == 10);
+    assert!(v1[1] == 20);
+    assert!(v1[2] == 30);
+}
+
+#[test]
+fn matrix_test() {
+    let mat1 = Matrix::new(vec![vec![1, 2], vec![3, 4]]);
+    let v1 = mat1.row(1);
+    assert!(v1[0] == 3);
+    assert!(v1[1] == 4);
+
+    let v1 = mat1.column(1);
+    assert!(v1[0] == 2);
+    assert!(v1[1] == 4);
+
+    assert!(mat1.trace() == 5);
+
+    let mat2 = mat1.transpose();
+    assert!(mat2[0][0] == 1);
+    assert!(mat2[0][1] == 3);
+    assert!(mat2[1][0] == 2);
+    assert!(mat2[1][1] == 4);
+}
+
+#[test]
+fn matrix_ops_test() {
+    let mat1 = Matrix::new(vec![vec![1, 2], vec![2, 3]]);
+    let mat2 = Matrix::new(vec![vec![1, 1], vec![0, 1]]);
+    let v1 = Vector::new(vec![1, 2]);
+    let mat3 = mat1.clone() + &mat2;
+    assert!(mat3[0][0] == 2);
+    assert!(mat3[0][1] == 3);
+    assert!(mat3[1][0] == 2);
+    assert!(mat3[1][1] == 4);
+
+    let mat3 = mat1.clone() - &mat2;
+    assert!(mat3[0][0] == 0);
+    assert!(mat3[0][1] == 1);
+    assert!(mat3[1][0] == 2);
+    assert!(mat3[1][1] == 2);
+
+    let mat3 = mat1.clone() * 3;
+    assert!(mat3[0][0] == 3);
+    assert!(mat3[0][1] == 6);
+    assert!(mat3[1][0] == 6);
+    assert!(mat3[1][1] == 9);
+
+    // 1 2   1 1
+    // 2 3 * 0 1
+    let mat3 = mat1.clone() * &mat2;
+    assert!(mat3[0][0] == 1);
+    assert!(mat3[0][1] == 3);
+    assert!(mat3[1][0] == 2);
+    assert!(mat3[1][1] == 5);
+
+    let v2 = mat1.clone() * &v1;
+    assert!(v2[0] == 5);
+    assert!(v2[1] == 8);
 }
 
 #[test]
