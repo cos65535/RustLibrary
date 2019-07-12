@@ -9,7 +9,7 @@ impl LCA {
     fn new(g: &Graph, root: usize) -> LCA {
         let n = g.len();
         let mut log_size = 0;
-        while (1 << log_size) < n { log_size += 1; }
+        while (1 << log_size) <= n { log_size += 1; }
         let mut parent = vec![vec![root; log_size]; n];
         let mut depth = vec![0; n];
 
